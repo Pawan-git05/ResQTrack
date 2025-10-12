@@ -1,0 +1,13 @@
+Flask==3.0.3
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.7
+Flask-JWT-Extended==4.6.0
+Flask-Cors==4.0.1
+Flask-Mail==0.10.0
+mysqlclient==2.2.4
+python-dotenv==1.0.1
+boto3==1.35.5
+Pillow==10.4.0
+requests==2.32.3
+gunicorn==22.0.0
+PyYAML==6.0.2

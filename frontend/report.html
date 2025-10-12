@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Report Case - ResQTrack</title>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+	<link href="./assets/css/styles.css" rel="stylesheet" />
+</head>
+<body>
+	<nav class="navbar navbar-expand-lg bg-body-tertiary">
+		<div class="container">
+			<a class="navbar-brand" href="./index.html">🐾 <span>ResQTrack</span></a>
+		</div>
+	</nav>
+	<div class="container py-4">
+		<a href="./index.html" class="back-btn mb-3">⬅ Go Back to ResQTrack</a>
+		<h1 class="h3 mb-3">Report Animal Case</h1>
+		<form id="report-form" class="row g-3" enctype="multipart/form-data">
+			<div class="col-md-6">
+				<label class="form-label">Reporter Name (optional)</label>
+				<input name="reporter_name" class="form-control" />
+			</div>
+			<div class="col-md-6">
+				<label class="form-label">Contact Number</label>
+				<input name="reporter_phone" class="form-control" required />
+			</div>
+			<div class="col-md-6">
+				<label class="form-label">Email (optional)</label>
+				<input name="reporter_email" type="email" class="form-control" />
+			</div>
+			<div class="col-md-6">
+				<label class="form-label">Location</label>
+				<input name="location" class="form-control" required />
+			</div>
+			<div class="col-md-4">
+				<label class="form-label">Animal Type</label>
+				<select name="animal_type" class="form-select">
+					<option>Dog</option>
+					<option>Cat</option>
+					<option>Bird</option>
+					<option>Other</option>
+				</select>
+			</div>
+			<div class="col-md-4">
+				<label class="form-label">Urgency</label>
+				<select name="urgency" class="form-select">
+					<option>Low</option>
+					<option>Medium</option>
+					<option>Critical</option>
+				</select>
+			</div>
+			<div class="col-md-4">
+				<label class="form-label">Upload Image/Video</label>
+				<input type="file" name="file" class="form-control" />
+			</div>
+			<div class="col-12">
+				<label class="form-label">Additional Notes</label>
+				<textarea name="notes" class="form-control" rows="3"></textarea>
+			</div>
+			<div class="col-12">
+				<button class="btn btn-gradient-orange" type="submit">Submit Report</button>
+			</div>
+		</form>
+		<div id="result" class="alert d-none mt-3" role="alert"></div>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="./assets/js/api.js"></script>
+	<script>
+		const form = document.getElementById('report-form');
+		const result = document.getElementById('result');
+		form.addEventListener('submit', async (e) => {
+			e.preventDefault();
+			const formData = new FormData(form);
+			try {
+				const resp = await window.ResQApi.reportCase(formData);
+				result.className = 'alert alert-success';
+				result.textContent = `Thank you! Help is on the way. Your case ID: ${resp.case_code}`;
+				result.classList.remove('d-none');
+				form.reset();
+			} catch (err) {
+				result.className = 'alert alert-danger';
+				result.textContent = err.message;
+				result.classList.remove('d-none');
+			}
+		});
+	</script>
+</body>
+</html>
