@@ -1,4 +1,4 @@
-const API_BASE = '';
+const API_BASE = 'http://localhost:5000';
 
 async function apiRequest(path, { method = 'GET', body = null, isForm = false, token = null } = {}) {
 	const headers = {};
