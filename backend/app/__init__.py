@@ -9,6 +9,7 @@ from .routes.registrations import registrations_bp
 from .routes.hospitals import hospitals_bp
 from .routes.donations import donations_bp
 from .routes.uploads import uploads_bp
+from .routes.admin import admin_bp
 
 
 def create_app(config_class: type = Config) -> Flask:
@@ -36,5 +37,6 @@ def create_app(config_class: type = Config) -> Flask:
 	app.register_blueprint(hospitals_bp)
 	app.register_blueprint(donations_bp)
 	app.register_blueprint(uploads_bp)
+	app.register_blueprint(admin_bp)
 
 	return app

@@ -1,4 +1,4 @@
-# ResQTrack
+  # ResQTrack
 
 ResQTrack is a lightweight, full‑stack web app that coordinates animal rescue across citizens, NGOs, volunteers, animal hospitals and donors. Citizens can quickly report an injured animal, NGOs and volunteers can act, hospitals can be listed, and donors can contribute — all tracked end‑to‑end.
 
