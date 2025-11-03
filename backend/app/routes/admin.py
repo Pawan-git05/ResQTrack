@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, Response
 from flask_jwt_extended import jwt_required
 from ..extensions import db
 from ..models import (
@@ -563,6 +563,37 @@ def _import_emergency_contacts(csv_input):
 	
 	return imported_count, errors
 
+
+
+@admin_bp.get("/sample-csv/<service_type>")
+@jwt_required()
+def download_sample_csv(service_type: str):
+    """Generate and serve a sample CSV file for the given service type"""
+    headers = []
+    if service_type == 'hospitals':
+        headers = ['name', 'address', 'phone', 'location', 'is_24x7', 'treatment_types']
+    elif service_type == 'police-stations':
+        headers = ['name', 'address', 'phone', 'location', 'station_code', 'is_24x7', 'jurisdiction', 'officer_in_charge']
+    elif service_type == 'blood-banks':
+        headers = ['name', 'address', 'phone', 'location', 'is_24x7', 'blood_types_available', 'contact_person', 'license_number']
+    elif service_type == 'fire-stations':
+        headers = ['name', 'address', 'phone', 'location', 'station_code', 'is_24x7', 'equipment_available', 'chief_officer']
+    elif service_type == 'emergency-contacts':
+        headers = ['name', 'phone', 'email', 'service_type', 'location', 'is_24x7', 'description', 'priority_level']
+    else:
+        return {"error": "Invalid service type"}, 400
+
+    # Create a CSV in-memory
+    si = io.StringIO()
+    cw = csv.writer(si)
+    cw.writerow(headers)
+    output = si.getvalue()
+
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment;filename=sample_{service_type}.csv"}
+    )
 
 def _import_hospitals(csv_input):
 	"""Import hospitals from CSV"""

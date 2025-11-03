@@ -6,7 +6,7 @@ async function apiRequest(path, { method = 'GET', body = null, isForm = false, t
     if (!isForm) headers['Content-Type'] = 'application/json';
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const fetchOptions = { method, headers, credentials: 'same-origin' };
+    const fetchOptions = { method, headers, credentials: 'include' };
     if (body) fetchOptions.body = isForm ? body : JSON.stringify(body);
 
     try {
@@ -43,17 +43,19 @@ class API {
     async request(path, options = {}) {
         const { method = 'GET', body = null, headers = {} } = options;
         
+        const isFormData = (typeof FormData !== 'undefined') && body instanceof FormData;
+        const baseHeaders = isFormData ? {} : { 'Content-Type': 'application/json' };
         const config = {
             method,
             headers: {
-                'Content-Type': 'application/json',
+                ...baseHeaders,
                 ...headers
             },
-            credentials: 'same-origin'
+            credentials: 'include'
         };
 
         if (body) {
-            config.body = JSON.stringify(body);
+            config.body = isFormData ? body : JSON.stringify(body);
         }
 
         try {

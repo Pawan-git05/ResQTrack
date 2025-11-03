@@ -18,7 +18,12 @@ class Config:
 
 	# CORS
 	CORS_SUPPORTS_CREDENTIALS: bool = True
-	CORS_ORIGINS: str | list[str] = os.getenv("CORS_ORIGINS", "*")
+	# Prefer ALLOWED_ORIGINS for production; fallback to CORS_ORIGINS or '*'
+	_cors_origins_env = os.getenv(
+        "ALLOWED_ORIGINS", 
+        os.getenv("CORS_ORIGINS", "http://127.0.0.1:5500,http://localhost:5500")
+    )
+	CORS_ORIGINS: str | list[str] = _cors_origins_env.split(",") if "," in _cors_origins_env else _cors_origins_env
 
 	# Mail
 	MAIL_SERVER: str = os.getenv("MAIL_SERVER", "smtp.gmail.com")
@@ -38,3 +43,6 @@ class Config:
 	AWS_ACCESS_KEY_ID: str | None = os.getenv("AWS_ACCESS_KEY_ID")
 	AWS_SECRET_ACCESS_KEY: str | None = os.getenv("AWS_SECRET_ACCESS_KEY")
 	AWS_REGION: str | None = os.getenv("AWS_REGION")
+
+	# Rate limiting storage (optional Redis URL). Flask-Limiter will use in-memory if not provided.
+	RATELIMIT_STORAGE_URI: str | None = os.getenv("RATELIMIT_STORAGE_URI")

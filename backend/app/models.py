@@ -34,6 +34,7 @@ class NGO(db.Model, TimestampMixin):
 	id = db.Column(db.Integer, primary_key=True)
 	name = db.Column(db.String(255), nullable=False)
 	email = db.Column(db.String(255), unique=True, nullable=False)
+	password_hash = db.Column(db.String(255), nullable=True)  # For login authentication
 	phone = db.Column(db.String(30), nullable=False)
 	location = db.Column(db.String(255), nullable=True)
 	operating_zones = db.Column(db.Text, nullable=True)
@@ -49,6 +50,7 @@ class Volunteer(db.Model, TimestampMixin):
 	id = db.Column(db.Integer, primary_key=True)
 	name = db.Column(db.String(255), nullable=False)
 	email = db.Column(db.String(255), unique=True, nullable=False)
+	password_hash = db.Column(db.String(255), nullable=True)  # For login authentication
 	phone = db.Column(db.String(30), nullable=False)
 	location = db.Column(db.String(255), nullable=True)
 	expertise = db.Column(db.String(255), nullable=True)  # pickup, first aid, foster

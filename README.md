@@ -1,188 +1,207 @@
   # ResQTrack
+ResQTrack is a small, friendly tool to help people, NGOs, volunteers, and hospitals coordinate animal rescues. A citizen can report an injured animal (with an optional photo/video), responders can pick it up from there, and you can track things end‑to‑end. Donors can chip in too.
 
-ResQTrack is a lightweight, full‑stack web app that coordinates animal rescue across citizens, NGOs, volunteers, animal hospitals and donors. Citizens can quickly report an injured animal, NGOs and volunteers can act, hospitals can be listed, and donors can contribute — all tracked end‑to‑end.
+Under the hood it’s a Flask API with a simple static frontend (HTML/JS/CSS). It’s easy to run locally, and it comes with production basics like JWT auth, database migrations, CORS, upload validation, logging, and optional Docker.
 
-The project is intentionally simple to run locally (no heavy frontend tooling) but still production‑minded on the backend (JWT auth, migrations, mail, uploads, CORS).
+## Features
+- Report animal cases (optionally attach media)
+- Sign in with roles: ADMIN / NGO / VOLUNTEER (JWT)
+- Register NGOs and Volunteers
+- Hospitals directory and donation records
+- Centralized JSON error responses (no HTML error pages)
+- Sensible rate limiting (login/registration)
+- CORS that you can control via environment variables
+- Logging to console (and file if you want)
+- Tests via pytest and CI via GitHub Actions
 
-## What this project does
-- Citizens submit rescue reports (with optional photo/video) to create an incident.
-- NGOs/volunteers coordinate response and status updates.
-- Hospital directory helps route animals to the right care.
-- Donors can record donations with automatic email receipts (if SMTP configured).
-- Admin/NGO actions use JWT for protected routes.
-- **NEW**: Comprehensive data integration system for emergency services (police, fire, blood banks, etc.)
-- **NEW**: Interactive data dashboard for importing, visualizing, and managing multiple datasets.
+## Quick Start (local)
 
-## Tech Stack
-- **Backend**: Flask, SQLAlchemy, Alembic (Flask‑Migrate), JWT, Flask‑Mail, Flask‑CORS, SQLite (default) or any SQL via `DATABASE_URL`.
-- **Frontend**: HTML + Bootstrap + vanilla JS. No build step. Served as static files.
-
-## Quick Start (Windows‑friendly)
-
-### 1) Prerequisites
-- Python 3.11+
-- Optional: MySQL 8+ if you plan to use MySQL instead of SQLite
-
-### 2) Setup Python environment
-```bash
+1) Install dependencies
+```
 python -m venv .venv
-.venv\Scripts\activate
+".venv\\Scripts\\Activate.ps1"  # Windows
+# source .venv/bin/activate       # macOS/Linux
 pip install -r requirements.txt
 ```
 
-Environment file (optional): copy and adjust if you maintain one.
-```bash
-# If you have an example env
-# copy .env.example .env   (PowerShell: cp .env.example .env)
+2) Configure environment
+```
+cp .env.example .env  # or copy manually on Windows
+```
+Keep defaults for SQLite, and set `ALLOWED_ORIGINS=http://localhost:8000`.
+
+3) Initialize the database
+```
+set FLASK_APP=backend/wsgi.py   # Windows
+flask db upgrade
+# macOS/Linux: export FLASK_APP=backend/wsgi.py && flask db upgrade
 ```
 
-Key environment variables (see `backend/config.py` for defaults):
+4) Run the app
+```
+python backend/wsgi.py   # API at http://localhost:5000
+cd frontend && python -m http.server 8000   # Frontend at http://localhost:8000
+```
+
+That’s it. If you want containers, use `docker-compose up --build` instead.
+
+## Folder Structure
+```
+ResQTrack/
+  backend/
+    app/
+      routes/            # API blueprints (auth, cases, uploads, etc.)
+      models.py          # SQLAlchemy models
+      extensions.py      # Flask extensions (db, jwt, cors, limiter, mail)
+      utils.py           # Helpers
+      mailer.py          # Email utilities
+      data_integration.py# Bulk data import/export utilities
+    config.py            # App configuration
+    logging_config.py    # Logging setup (RotatingFileHandler + console)
+    wsgi.py              # App entrypoint for Gunicorn/Flask
+  frontend/
+    assets/css/          # Styles (includes toasts, spinners, theme)
+    assets/js/           # API client + UI helpers (toasts, loading overlay)
+    *.html               # Static pages (index, report, register, donate, admin, data-dashboard)
+  docs/                  # Docs, SQL schema, ERD/DFD
+  migrations/            # Alembic migration scripts
+  tests/                 # Pytest suite
+  .github/workflows/ci.yml
+  .env.example           # Example environment file
+  Dockerfile
+  docker-compose.yml
+  requirements.txt
+  README.md
+```
+
+## Setup
+
+### Prerequisites
+- Python 3.11+
+- Optional: MySQL 8+ (if not using SQLite)
+- Optional: Docker and Docker Compose
+
+### 1) Clone and create a virtual environment
+Windows (PowerShell):
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+macOS/Linux (bash/zsh):
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 2) Configure environment
+Copy the example env and adjust:
+```bash
+cp .env.example .env    # Windows PowerShell: cp .env.example .env
+```
+Important variables:
 - `SECRET_KEY`, `JWT_SECRET_KEY`
-- `DATABASE_URL` (omit to use local SQLite `resqtrack.db`)
-- `MAIL_*` (SMTP settings for email receipts)
-- `CORS_ORIGINS` (defaults to `*` for local/dev)
+- `DATABASE_URL` (defaults to SQLite if omitted)
+- `MAIL_*` for SMTP
+- `ALLOWED_ORIGINS` for CORS in production (comma‑separated list)
+- `UPLOAD_FOLDER`, `MAX_CONTENT_LENGTH` (bytes)
+- Optional S3: `AWS_S3_BUCKET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`
+- Optional rate limit storage: `RATELIMIT_STORAGE_URI` (e.g., `redis://redis:6379`)
 
 ### 3) Initialize the database
-SQLite is default; no server needed.
+SQLite (default):
 ```bash
-set FLASK_APP=backend/wsgi.py
-python -m flask db upgrade
+set FLASK_APP=backend/wsgi.py       # Windows
+flask db upgrade
 ```
-
-Optional: load sample data (inspect `docs/sql/sample_data.sql`).
-
-**NEW**: Import comprehensive emergency services data:
 ```bash
-python import_sample_data.py
+export FLASK_APP=backend/wsgi.py    # macOS/Linux
+flask db upgrade
 ```
+For MySQL, set `DATABASE_URL` to e.g. `mysql://user:password@localhost:3306/resqtrack` and run `flask db upgrade`.
 
-### 4) Run the backend (API)
+### 4) Run the app locally
 ```bash
 python backend/wsgi.py
 ```
-The API will be available at `http://localhost:5000` (health check at `/health`).
+Backend: http://localhost:5000
 
-### 5) Run the frontend (static)
-From the `frontend/` directory, serve files with a simple HTTP server:
+Frontend (static):
 ```bash
 cd frontend
 python -m http.server 8000
 ```
-Visit `http://localhost:8000/index.html`.
+Visit http://localhost:8000/index.html
 
-**NEW**: Access the Data Dashboard at `http://localhost:8000/data-dashboard.html` for:
-- Import/export CSV datasets
-- Visualize emergency services distribution
-- Manage NGOs, volunteers, hospitals, police stations, blood banks, fire stations
-- View real-time statistics and analytics
+## Run with Docker
+Build and start the full stack (Flask + MySQL + Redis):
+```bash
+docker-compose up --build
+```
+- API: http://localhost:5000
+- MySQL: localhost:3306
+- Redis: localhost:6379
 
-Front‑to‑back integration is configured via `frontend/assets/js/api.js`:
-```js
-const API_BASE = 'http://localhost:5000';
+Notes:
+- By default, the app uses `DATABASE_URL` from your `.env`. If not set, it falls back to SQLite.
+- Volumes persist uploads and logs.
+- CORS can be controlled via `ALLOWED_ORIGINS` env (comma‑separated).
+
+## Example API Usage
+Login:
+```bash
+curl -X POST http://localhost:5000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@resqtrack.com", "password": "admin123", "role": "ADMIN"}'
+```
+Report a case (JSON):
+```bash
+curl -X POST http://localhost:5000/cases \
+  -H "Content-Type: application/json" \
+  -d '{"reporter_phone":"9999999999","location":"MG Road","animal_type":"Dog","urgency":"Low"}'
+```
+Report a case with media (multipart):
+```bash
+curl -X POST http://localhost:5000/cases \
+  -F file=@/path/to/photo.jpg \
+  -F reporter_phone=9999999999 -F location="MG Road"
+```
+Upload file directly:
+```bash
+curl -X POST http://localhost:5000/uploads -F file=@/path/to/photo.jpg
 ```
 
-### Frontend UX notes
-- Images are responsive (`img { max-width: 100%; height: auto; }`) and hero/card media use object‑fit to avoid distortion.
-- The story popup on CTA buttons is disabled; buttons now navigate directly to their target pages.
+## Auth Roles
+| Role       | Who | Notes |
+|------------|-----|-------|
+| ADMIN      | Platform admin | Can access admin endpoints, manage resources |
+| NGO        | NGO member     | Can access NGO workflows |
+| VOLUNTEER  | Volunteer      | Can access volunteer workflows |
 
-## End‑user flows
-- **Report**: `Report` page posts a case with optional file; returns a `case_code` for reference.
-- **Donate**: `Donate` page records a donation and sends a receipt email when SMTP is configured.
-- **Register**: `Register` page has tabs for NGO and Volunteer applications.
-- **Hospitals**: `Hospitals` page lists directory entries; admins/NGOs can add via API.
+JWT identity payload includes `id`, `email`, and `role`.
 
-## API Reference
+## Security Hardening
+- CORS restricted via `ALLOWED_ORIGINS` (production)
+- Upload validation: extension whitelist, MIME type check, file size limit, sanitized filename
+- Global JSON error handlers for all exceptions (no HTML error pages)
+- Rate limiting: `5/min` for `/auth/login`, `10/hour` for registrations
 
-Base URL: `http://localhost:5000`
-
-### Health
-- `GET /health` → `{ status: "ok" }`
-
-### Auth
-- `POST /auth/login` body `{ email, password, role }` → `{ access_token }`
-  - roles: `ADMIN`, `NGO`, `VOLUNTEER`
-
-### Cases
-- `POST /cases` (public)
-  - Accepts JSON or multipart form data. Fields: `reporter_name?`, `reporter_phone`, `reporter_email?`, `location`, `latitude?`, `longitude?`, `animal_type?`, `urgency?`, `notes?`, and optional `file`.
-  - Response `201`: `{ message, case_id, case_code, media_url? }`
-- `PATCH /cases/<case_id>/status` (JWT required)
-  - Body `{ status }` where status is one of backend `CaseStatus` enums.
-
-### Registrations
-- `POST /register/ngo` → `201 { message, ngo_id }`
-- `POST /register/volunteer` → `201 { message, volunteer_id }`
-  - `409` on duplicate `email`.
-
-### Hospitals
-- `GET /hospitals` → `{ items: [...] }`
-- `POST /hospitals` (JWT required) → `201 { message, id }`
-
-### Donations
-- `POST /donations` → `201 { message, id }`
-  - If `donor_email` is provided and SMTP is configured, a receipt email is sent.
-
-### Uploads
-- `POST /uploads` (multipart, field `file`) → `201 { filename, url }`
-- `GET /uploads/<filename>` → serves the uploaded file
-
-### Data Integration (NEW)
-- `POST /data/import/<type>` (JWT required) → `201 { message, stats }`
-  - types: `ngos`, `volunteers`, `hospitals`, `police-stations`, `blood-banks`, `fire-stations`
-- `GET /data/export/<type>` (JWT required) → `200 { message, download_url }`
-- `GET /data/statistics` (JWT required) → `200 { statistics, location_distribution }`
-- `GET /data/emergency-contacts` → `200 { contacts: [...] }`
-- `GET /data/nearby-services?location=<city>&service_type=<type>` → `200 { services: [...] }`
-
-### Common Errors
-- `400` Missing/invalid fields
-- `401` Invalid credentials or missing token
-- `409` Duplicate resource (e.g., `email` already registered)
-
-## Data model (high‑level)
-- `AnimalCase` with `case_code`, contact/location, type, urgency, notes, optional `media_url`, and `status`.
-- `NGO`, `Volunteer`, `Hospital`, `Donation` entities with essential fields.
-- **NEW**: `PoliceStation`, `BloodBank`, `FireStation`, `EmergencyContact` for comprehensive emergency services.
-- See `docs/architecture/ERD.md` and `backend/app/models.py` for complete definitions.
-
-## Configuration & Operations
-- CORS is enabled (credentials supported). Tune origins via `CORS_ORIGINS`.
-- File uploads stored in `uploads/` by default; override `UPLOAD_FOLDER`. You can front this with a CDN or adapt to S3.
-- Mail uses standard SMTP. For Gmail, use App Passwords and set `MAIL_USERNAME`/`MAIL_PASSWORD`.
-- Migrations are managed via Alembic (Flask‑Migrate). Commit migration scripts in `migrations/` for schema changes.
-
-## Project Structure
+## Testing & Linting
+- Run tests:
+```bash
+pytest -q
 ```
-backend/
-  app/
-    routes/
-    models.py
-    extensions.py
-    utils.py
-    mailer.py
-    data_integration.py  # NEW: Data import/export system
-  config.py
-  wsgi.py
-frontend/
-  index.html report.html register.html donate.html hospitals.html data-dashboard.html  # NEW
-  assets/css/styles.css
-  assets/js/api.js app.js data-dashboard.js  # NEW
-docs/
-  PRD.md
-  architecture/ERD.md, DFD.md
-  sql/schema.sql, sample_data.sql
-  DATA_INTEGRATION.md  # NEW: Comprehensive data integration guide
-  DATA_INTEGRATION_QUICK_REFERENCE.md  # NEW: Quick reference
-sample_data/  # NEW: Sample CSV files
-  ngos.csv volunteers.csv hospitals.csv police_stations.csv blood_banks.csv fire_stations.csv
-import_sample_data.py  # NEW: Data import script
+- Lint:
+```bash
+flake8 backend
 ```
+CI (GitHub Actions) runs on push/PR: Python 3.11, installs deps, runs `flake8` and `pytest`.
 
-## Contributing
-1. Fork + branch from `main`.
-2. Make changes with clear commits.
-3. If you change the database, add a migration: `flask db migrate -m "..."` then `flask db upgrade` locally and include the generated script.
-4. Open a PR describing the change, rationale, and testing steps.
-
-## License
-MIT
+## Troubleshooting
+- 401 Unauthorized: Ensure `Authorization: Bearer <token>` header is set for protected endpoints.
+- CORS errors in browser: set `ALLOWED_ORIGINS` to include your frontend origin (e.g., `http://localhost:8000`).
+- File upload fails: verify extension/MIME type and that `MAX_CONTENT_LENGTH` isn’t exceeded.
+- MySQL connection errors in Docker: wait for db to be healthy, or check `DATABASE_URL` and credentials.
+- Emails not sent: verify SMTP credentials and allow provider‑specific requirements (e.g., Gmail App Passwords).
+- Rate limit exceeded: API returns 429; reduce frequency or configure `RATELIMIT_STORAGE_URI`.

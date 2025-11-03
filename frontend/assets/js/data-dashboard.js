@@ -7,6 +7,7 @@ class DataDashboard {
     constructor() {
         this.api = new API();
         this.charts = {};
+        this.adminToken = null;
         this.init();
     }
 
@@ -53,6 +54,25 @@ class DataDashboard {
             console.error('Error loading statistics:', error);
             this.showToast('Error loading statistics', 'error');
         }
+    }
+
+    async ensureAdminAuth() {
+        if (this.adminToken) return;
+        const res = await fetch(`${this.api.baseURL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                email: 'admin@resqtrack.com',
+                password: 'admin123',
+                role: 'ADMIN'
+            })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.access_token) {
+            throw new Error(data.error || 'Admin authentication failed');
+        }
+        this.adminToken = data.access_token;
     }
 
     createServiceChart(statistics) {
@@ -157,12 +177,15 @@ class DataDashboard {
         this.showLoading(true);
 
         try {
+            // Ensure we are authenticated for protected import endpoints
+            await this.ensureAdminAuth();
             const formData = new FormData();
             formData.append('file', file);
 
             const response = await this.api.post(`/data/import/${type}`, formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data'
+                    // Let the browser set proper multipart boundary
+                    'Authorization': `Bearer ${this.adminToken}`
                 }
             });
 

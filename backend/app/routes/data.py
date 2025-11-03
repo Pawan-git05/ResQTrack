@@ -5,7 +5,8 @@ Handles CSV uploads, data validation, and export functionality
 
 import os
 import json
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, send_from_directory
+
 from flask_jwt_extended import jwt_required
 from werkzeug.utils import secure_filename
 
@@ -22,6 +23,15 @@ def allowed_file(filename):
     """Check if file extension is allowed"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+@data_bp.get('/sample/<path:filename>')
+def download_sample_file(filename: str):
+    """Serve sample CSV files from the project's sample_data directory."""
+    sample_dir = current_app.config.get('SAMPLE_DATA_DIR')
+    if not sample_dir:
+        # backend/app/routes -> up three levels to project root, then sample_data
+        app_root = current_app.root_path
+        sample_dir = os.path.abspath(os.path.join(app_root, os.pardir, os.pardir, 'sample_data'))
+    return send_from_directory(sample_dir, filename, as_attachment=True)
 
 @data_bp.route('/import/ngos', methods=['POST'])
 @jwt_required()

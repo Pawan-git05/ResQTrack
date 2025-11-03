@@ -335,3 +335,80 @@ footer { background: #0b1220; color: #e5e7eb; padding: 2rem 0; margin-top: 0; }
 		height: 26px !important;
 	}
 }
+
+/* --- UI Enhancements (Non-breaking, visual-only) --- */
+
+/* Navbar */
+.navbar.bg-body-tertiary {
+  background: rgba(255,255,255,.85) !important;
+  backdrop-filter: saturate(160%) blur(6px);
+  box-shadow: 0 6px 24px rgba(2,6,23,.06);
+}
+.navbar .navbar-brand { display: inline-flex; align-items: center; gap: 6px; }
+.navbar .navbar-brand span {
+  background: linear-gradient(90deg, var(--brand-blue), var(--brand-green));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.navbar .nav-link { position: relative; font-weight: 600; }
+.navbar .nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  bottom: .35rem;
+  height: 2px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .2s ease;
+  background: currentColor;
+  opacity: .45;
+}
+.navbar .nav-link:hover::after,
+.navbar .nav-link.active::after { transform: scaleX(1); }
+
+/* Section spacing polish */
+section { scroll-margin-top: 72px; }
+
+/* Cards subtle lift on focus (keyboard friendly) */
+.card:focus-within,
+.card:focus { outline: none; box-shadow: 0 0 0 .2rem rgba(37,99,235,.12), 0 10px 28px rgba(2,6,23,.08); }
+
+/* Tables */
+.table thead.table-dark {
+  background: linear-gradient(90deg, #0b1220, #1f2937) !important;
+  border-bottom: 0;
+}
+.table > :not(caption) > * > * { vertical-align: middle; }
+.table tbody tr:hover { background-color: #f8fafc; }
+.table tbody tr { transition: background-color .15s ease; }
+
+/* Nav tabs */
+.nav-tabs { border-color: #e5e7eb; }
+.nav-tabs .nav-link { font-weight: 600; color: #334155; }
+.nav-tabs .nav-link.active { color: var(--brand-blue); border-color: var(--brand-blue); }
+.nav-tabs .nav-link:hover { border-color: #cbd5e1; }
+
+/* Modals */
+.modal-content { border-radius: 14px; box-shadow: 0 16px 48px rgba(2,6,23,.28); }
+.modal-header { border-bottom-color: #f1f5f9; }
+.modal-footer { border-top-color: #f1f5f9; }
+
+/* Forms small refinements */
+.form-label { font-weight: 600; }
+.form-control::placeholder { color: #94a3b8; }
+
+/* Carousel controls larger hit area */
+.carousel-control-prev, .carousel-control-next { width: 7%; }
+
+/* Footer subtle top shadow */
+footer { box-shadow: 0 -8px 24px rgba(2,6,23,.06) inset; }
+
+/* Utility classes */
+.soft-shadow { box-shadow: 0 8px 24px rgba(2,6,23,.08); }
+.rounded-16 { border-radius: 16px; }
+
+/* Reduce motion respect */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

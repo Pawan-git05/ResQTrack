@@ -1051,7 +1051,8 @@
 			
 			const fileName = sampleFiles[serviceType];
 			if (fileName) {
-				window.open(`./sample_data/${fileName}`, '_blank');
+				const base = (window.CONFIG && window.CONFIG.API_BASE_URL) ? window.CONFIG.API_BASE_URL : 'http://localhost:5000';
+				window.open(`${base}/data/sample/${fileName}`, '_blank');
 			}
 		}
 
