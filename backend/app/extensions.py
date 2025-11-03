@@ -10,3 +10,11 @@ migrate: Migrate = Migrate()
 jwt: JWTManager = JWTManager()
 cors: CORS = CORS()
 mail: Mail = Mail()
+
+
+@jwt.user_identity_loader
+def user_identity_lookup(user):
+    """Convert user identity to string for JWT"""
+    if isinstance(user, dict):
+        return str(user.get('id', ''))
+    return str(user)

@@ -1,0 +1,6 @@
+name,address,phone,location,is_24x7,treatment_types
+Pet Hospital Mumbai,123 Marine Drive,Mumbai,+91-9876543220,Mumbai,true,surgery,first aid,emergency
+Animal Care Center Delhi,456 Connaught Place,Delhi,+91-9876543221,Delhi,false,first aid,general treatment
+Bangalore Pet Clinic,789 MG Road,Bangalore,+91-9876543222,Bangalore,true,surgery,emergency,specialist
+Chennai Animal Hospital,321 Anna Salai,Chennai,+91-9876543223,Chennai,false,first aid,general treatment
+Pune Veterinary Center,654 FC Road,Pune,+91-9876543224,Pune,true,surgery,first aid,emergency

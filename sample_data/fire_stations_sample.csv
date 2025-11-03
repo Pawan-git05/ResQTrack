@@ -1,0 +1,4 @@
+name,address,phone,location,station_code,equipment_available,chief_officer,is_24x7
+Central Fire Station,400 Fire Lane,555-3001,Downtown,CFS001,"Fire Trucks, Ladders, Rescue Equipment",Chief Tom Wilson,true
+North Fire Station,500 North Fire Road,555-3002,North Side,NFS001,"Fire Trucks, Ambulance, Hazmat",Capt. Lisa Garcia,true
+South Fire Station,600 South Fire Street,555-3003,South Side,SFS001,"Fire Trucks, Water Tankers",Lt. Mark Johnson,false

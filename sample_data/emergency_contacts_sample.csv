@@ -1,0 +1,5 @@
+name,phone,email,service_type,location,description,priority_level,is_24x7
+Emergency Hotline,911,,Emergency,City-wide,Emergency response hotline,1,true
+Poison Control,555-4001,poison@health.gov,Medical,Emergency,Poison control center,1,true
+Mental Health Crisis,555-4002,crisis@health.gov,Medical,Emergency,Mental health crisis line,2,true
+Animal Control,555-4003,animals@city.gov,Emergency,City-wide,Animal emergency services,2,false

@@ -1,0 +1,6 @@
+name,address,phone,location,station_code,is_24x7,equipment_available,chief_officer
+Mumbai Fire Station,123 Fire Brigade Road,Mumbai,+91-9876543235,Mumbai,MFS001,true,"Fire trucks,Rescue equipment,Ladders",Chief Fire Officer Ravi Sharma
+Delhi Fire Station,456 Emergency Lane,Delhi,+91-9876543236,Delhi,DFS001,true,"Fire trucks,Aerial ladder,Rescue tools",Chief Fire Officer Sunita Verma
+Bangalore Fire Station,789 Safety Street,Bangalore,+91-9876543237,Bangalore,BFS001,true,"Fire trucks,Rescue equipment,Water tankers",Chief Fire Officer Kumar Reddy
+Chennai Fire Station,321 Fire Service Road,Chennai,+91-9876543238,Chennai,CFS001,true,"Fire trucks,Aerial ladder,Rescue tools",Chief Fire Officer Rajesh Nair
+Pune Fire Station,654 Emergency Road,Pune,+91-9876543239,Pune,PFS001,true,"Fire trucks,Rescue equipment,Ladders",Chief Fire Officer Priya Joshi

@@ -99,3 +99,158 @@
 })();
 
 
+// UI/UX Utilities
+(function() {
+	function ensureToastContainer() {
+		let container = document.getElementById('toast-container');
+		if (!container) {
+			container = document.createElement('div');
+			container.id = 'toast-container';
+			container.className = 'toast-container';
+			document.body.appendChild(container);
+		}
+		return container;
+	}
+
+	class ToastManagerClass {
+		constructor() {
+			this.container = ensureToastContainer();
+		}
+		show(type, message, duration = 5000) {
+			const toast = this._createToast(type, message);
+			this.container.appendChild(toast);
+			if (duration > 0) {
+				setTimeout(() => this._removeToast(toast), duration);
+			}
+			return toast;
+		}
+		success(message, duration) { return this.show('success', message, duration); }
+		error(message, duration) { return this.show('error', message, duration); }
+		info(message, duration) { return this.show('info', message, duration); }
+		_createToast(type, message) {
+			const el = document.createElement('div');
+			el.className = `toast toast-${type}`;
+			el.innerHTML = `<span>${message}</span><button class="toast-close" aria-label="Close">×</button>`;
+			el.querySelector('.toast-close').addEventListener('click', () => this._removeToast(el));
+			return el;
+		}
+		_removeToast(el) {
+			el.style.animation = 'fadeOut .2s ease forwards';
+			el.addEventListener('animationend', () => el.remove(), { once: true });
+		}
+	}
+
+	const LoadingOverlay = {
+		_el: null,
+		_create() {
+			if (this._el) return this._el;
+			const overlay = document.createElement('div');
+			overlay.className = 'loading-overlay';
+			const spinner = document.createElement('div');
+			spinner.className = 'loading-spinner';
+			overlay.appendChild(spinner);
+			this._el = overlay;
+			return this._el;
+		},
+		show() {
+			const el = this._create();
+			if (!document.body.contains(el)) document.body.appendChild(el);
+		},
+		hide() {
+			if (!this._el) return;
+			this._el.style.animation = 'fadeOut .2s ease forwards';
+			this._el.addEventListener('animationend', () => {
+				this._el.remove();
+				this._el = null;
+			}, { once: true });
+		},
+	};
+
+	class FormValidatorClass {
+		validateRequired(value) { return String(value ?? '').trim().length > 0; }
+		validateEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim()); }
+		validatePhone(phone) { return /\d{10,}/.test(String(phone).replace(/\D/g, '')); }
+		validateNumber(value) { return !Number.isNaN(Number(value)); }
+		validateField(field) {
+			const rules = (field.getAttribute('data-validate') || '').split('|').map(r => r.trim()).filter(Boolean);
+			if (rules.length === 0) return true;
+			let valid = true; let message = '';
+			const value = field.value;
+			for (const rule of rules) {
+				if (rule === 'required' && !this.validateRequired(value)) { valid = false; message = 'This field is required.'; break; }
+				if (rule === 'email' && value && !this.validateEmail(value)) { valid = false; message = 'Enter a valid email.'; break; }
+				if (rule === 'phone' && !this.validatePhone(value)) { valid = false; message = 'Enter a valid phone number.'; break; }
+				if (rule === 'number' && !this.validateNumber(value)) { valid = false; message = 'Enter a valid number.'; break; }
+			}
+			if (valid) this.showFieldSuccess(field); else this.showFieldError(field, message);
+			return valid;
+		}
+		showFieldError(field, message) {
+			field.classList.remove('is-valid');
+			field.classList.add('is-invalid');
+			const feedback = field.nextElementSibling && field.nextElementSibling.classList.contains('invalid-feedback') ? field.nextElementSibling : null;
+			if (feedback) feedback.textContent = message || 'Invalid value.';
+		}
+		showFieldSuccess(field) {
+			field.classList.remove('is-invalid');
+			field.classList.add('is-valid');
+			const feedback = field.nextElementSibling && field.nextElementSibling.classList.contains('invalid-feedback') ? field.nextElementSibling : null;
+			if (feedback) feedback.textContent = '';
+		}
+		clearFieldValidation(field) {
+			field.classList.remove('is-valid', 'is-invalid');
+			const feedback = field.nextElementSibling && field.nextElementSibling.classList.contains('invalid-feedback') ? field.nextElementSibling : null;
+			if (feedback) feedback.textContent = '';
+		}
+		attachRealTimeValidation(form) {
+			const fields = form.querySelectorAll('[data-validate]');
+			fields.forEach((field) => {
+				field.addEventListener('input', () => {
+					if (field.getAttribute('data-validate').includes('email') && !field.value) {
+						this.clearFieldValidation(field);
+						return;
+					}
+					this.validateField(field);
+				});
+				field.addEventListener('blur', () => this.validateField(field));
+			});
+		}
+	}
+
+	const ButtonLoader = {
+		setLoading(button, isLoading) {
+			if (!button) return;
+			if (isLoading) {
+				button.setAttribute('disabled', 'true');
+				button.classList.add('btn-loading');
+				if (!button.querySelector('.spinner-inline')) this._addSpinner(button);
+			} else {
+				button.removeAttribute('disabled');
+				button.classList.remove('btn-loading');
+				this._removeSpinner(button);
+			}
+		},
+		_addSpinner(button) {
+			const span = document.createElement('span');
+			span.className = 'spinner-inline';
+			button.insertBefore(span, button.firstChild);
+		},
+		_removeSpinner(button) {
+			const s = button.querySelector('.spinner-inline');
+			if (s) s.remove();
+		}
+	};
+
+	// Expose globally (gracefully)
+	window.ToastManager = window.ToastManager || new ToastManagerClass();
+	window.LoadingOverlay = window.LoadingOverlay || LoadingOverlay;
+	window.FormValidator = window.FormValidator || new FormValidatorClass();
+	window.ButtonLoader = window.ButtonLoader || ButtonLoader;
+
+	// Global unhandled rejection handler
+	window.addEventListener('unhandledrejection', (event) => {
+		const msg = (event && event.reason && (event.reason.message || event.reason)) || 'Unexpected error occurred.';
+		if (window.ToastManager) window.ToastManager.error(String(msg));
+	});
+})();
+

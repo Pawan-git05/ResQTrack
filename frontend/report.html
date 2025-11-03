@@ -6,6 +6,7 @@
 	<title>Report Case - ResQTrack</title>
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
 	<link href="./assets/css/styles.css" rel="stylesheet" />
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
 	<nav class="navbar navbar-expand-lg bg-body-tertiary">
@@ -23,15 +24,21 @@
 			</div>
 			<div class="col-md-6">
 				<label class="form-label">Contact Number</label>
-				<input name="reporter_phone" class="form-control" required />
+				<input name="reporter_phone" class="form-control" required data-validate="required|phone" />
+				<div class="invalid-feedback"></div>
 			</div>
 			<div class="col-md-6">
 				<label class="form-label">Email (optional)</label>
-				<input name="reporter_email" type="email" class="form-control" />
+				<input name="reporter_email" type="email" class="form-control" data-validate="email" />
+				<div class="invalid-feedback"></div>
 			</div>
 			<div class="col-md-6">
 				<label class="form-label">Location</label>
-				<input name="location" class="form-control" required />
+				<input name="location" class="form-control" required data-validate="required" id="locationInput" />
+				<div class="invalid-feedback"></div>
+				<button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="openLocationPicker()">
+					📍 Select on Map
+				</button>
 			</div>
 			<div class="col-md-4">
 				<label class="form-label">Animal Type</label>
@@ -62,27 +69,141 @@
 				<button class="btn btn-gradient-orange" type="submit">Submit Report</button>
 			</div>
 		</form>
-		<div id="result" class="alert d-none mt-3" role="alert"></div>
+		<div id="result" class="alert d-none mt-3" role="alert" style="display:none"></div>
+	</div>
+
+	<!-- Location Picker Modal -->
+	<div class="modal fade" id="locationPickerModal" tabindex="-1" aria-labelledby="locationPickerModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="locationPickerModalLabel">📍 Select Location</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<div class="mb-3">
+						<label class="form-label">Click on the map to select the exact location</label>
+						<div id="reportLocationMap" style="height: 400px; border-radius: 8px; border: 1px solid #dee2e6;"></div>
+					</div>
+					<div class="row">
+						<div class="col-md-6">
+							<label class="form-label">Selected Coordinates</label>
+							<input type="text" class="form-control" id="selectedCoords" readonly />
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">Address</label>
+							<input type="text" class="form-control" id="selectedAddress" readonly />
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+					<button type="button" class="btn btn-primary" onclick="confirmLocation()">Use This Location</button>
+				</div>
+			</div>
+		</div>
 	</div>
 
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+	<script src="./assets/js/app.js"></script>
 	<script src="./assets/js/api.js"></script>
 	<script>
+		let reportLocationMap = null;
+		let selectedLocation = null;
+		
+		function openLocationPicker() {
+			new bootstrap.Modal(document.getElementById('locationPickerModal')).show();
+			
+			// Initialize map if not already done
+			if (!reportLocationMap) {
+				initReportLocationMap();
+			}
+		}
+		
+		function initReportLocationMap() {
+			reportLocationMap = L.map('reportLocationMap').setView([20.5937, 78.9629], 6);
+			
+			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				attribution: '© OpenStreetMap contributors'
+			}).addTo(reportLocationMap);
+			
+			// Add click handler to map
+			reportLocationMap.on('click', function(e) {
+				const lat = e.latlng.lat;
+				const lng = e.latlng.lng;
+				
+				selectedLocation = { lat, lng };
+				document.getElementById('selectedCoords').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+				
+				// Reverse geocode to get address
+				fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+					.then(response => response.json())
+					.then(data => {
+						if (data.display_name) {
+							document.getElementById('selectedAddress').value = data.display_name;
+						}
+					})
+					.catch(error => console.warn('Reverse geocoding failed:', error));
+			});
+		}
+		
+		function confirmLocation() {
+			if (!selectedLocation) {
+				if (window.ToastManager) window.ToastManager.error('Please select a location on the map');
+				return;
+			}
+			
+			const coords = document.getElementById('selectedCoords').value;
+			const address = document.getElementById('selectedAddress').value;
+			
+			// Update the location input field
+			document.getElementById('locationInput').value = address || coords;
+			
+			// Store coordinates for form submission
+			document.getElementById('locationInput').setAttribute('data-lat', selectedLocation.lat);
+			document.getElementById('locationInput').setAttribute('data-lng', selectedLocation.lng);
+			
+			// Close modal
+			bootstrap.Modal.getInstance(document.getElementById('locationPickerModal')).hide();
+			
+			if (window.ToastManager) window.ToastManager.success('Location selected successfully');
+		}
 		const form = document.getElementById('report-form');
 		const result = document.getElementById('result');
+		document.addEventListener('DOMContentLoaded', () => {
+			if (window.FormValidator) window.FormValidator.attachRealTimeValidation(form);
+		});
 		form.addEventListener('submit', async (e) => {
 			e.preventDefault();
+			const submitBtn = form.querySelector('button[type="submit"]');
+			let allValid = true;
+			form.querySelectorAll('[data-validate]').forEach((field) => {
+				if (window.FormValidator && !window.FormValidator.validateField(field)) allValid = false;
+			});
+			if (!allValid) {
+				if (window.ToastManager) window.ToastManager.error('Please fix validation errors');
+				return;
+			}
 			const formData = new FormData(form);
+			
+			// Add coordinates if available
+			const locationInput = document.getElementById('locationInput');
+			if (locationInput.getAttribute('data-lat') && locationInput.getAttribute('data-lng')) {
+				formData.append('latitude', locationInput.getAttribute('data-lat'));
+				formData.append('longitude', locationInput.getAttribute('data-lng'));
+			}
+			
 			try {
-				const resp = await window.ResQApi.reportCase(formData);
-				result.className = 'alert alert-success';
-				result.textContent = `Thank you! Help is on the way. Your case ID: ${resp.case_code}`;
-				result.classList.remove('d-none');
+				const resp = await window.ResQApi.reportCase(formData, { buttonElement: submitBtn });
+				if (window.ToastManager) window.ToastManager.success(`Thank you! Help is on the way. Case ID: ${resp.case_code}`);
 				form.reset();
+				form.querySelectorAll('.is-valid,.is-invalid').forEach(el => el.classList.remove('is-valid','is-invalid'));
+				// Clear location data attributes
+				locationInput.removeAttribute('data-lat');
+				locationInput.removeAttribute('data-lng');
 			} catch (err) {
-				result.className = 'alert alert-danger';
-				result.textContent = err.message;
-				result.classList.remove('d-none');
+				// api.js handles toasts; keep silent here
 			}
 		});
 	</script>

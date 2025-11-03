@@ -29,15 +29,18 @@
 				<form id="ngo-form" class="row g-3">
 					<div class="col-md-6">
 						<label class="form-label">Organization Name</label>
-						<input name="name" class="form-control" required />
+						<input name="name" class="form-control" required data-validate="required" />
+						<div class="invalid-feedback"></div>
 					</div>
 					<div class="col-md-6">
 						<label class="form-label">Email</label>
-						<input name="email" type="email" class="form-control" required />
+						<input name="email" type="email" class="form-control" required data-validate="required|email" />
+						<div class="invalid-feedback"></div>
 					</div>
 					<div class="col-md-6">
 						<label class="form-label">Phone</label>
-						<input name="phone" class="form-control" required />
+						<input name="phone" class="form-control" required data-validate="required|phone" />
+						<div class="invalid-feedback"></div>
 					</div>
 					<div class="col-md-6">
 						<label class="form-label">Operating Zones</label>
@@ -52,15 +55,18 @@
 				<form id="vol-form" class="row g-3">
 					<div class="col-md-6">
 						<label class="form-label">Name</label>
-						<input name="name" class="form-control" required />
+						<input name="name" class="form-control" required data-validate="required" />
+						<div class="invalid-feedback"></div>
 					</div>
 					<div class="col-md-6">
 						<label class="form-label">Email</label>
-						<input name="email" type="email" class="form-control" required />
+						<input name="email" type="email" class="form-control" required data-validate="required|email" />
+						<div class="invalid-feedback"></div>
 					</div>
 					<div class="col-md-6">
 						<label class="form-label">Phone</label>
-						<input name="phone" class="form-control" required />
+						<input name="phone" class="form-control" required data-validate="required|phone" />
+						<div class="invalid-feedback"></div>
 					</div>
 					<div class="col-md-6">
 						<label class="form-label">Expertise</label>
@@ -76,45 +82,61 @@
 				</form>
 			</div>
 		</div>
-		<div id="result" class="alert d-none mt-3" role="alert"></div>
+		<div id="result" class="alert d-none mt-3" role="alert" style="display:none"></div>
 	</div>
 
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="./assets/js/app.js"></script>
 	<script src="./assets/js/api.js"></script>
 	<script>
 		const ngoForm = document.getElementById('ngo-form');
 		const volForm = document.getElementById('vol-form');
 		const result = document.getElementById('result');
 
+		document.addEventListener('DOMContentLoaded', () => {
+			if (window.FormValidator) {
+				window.FormValidator.attachRealTimeValidation(ngoForm);
+				window.FormValidator.attachRealTimeValidation(volForm);
+			}
+			// Clear validation on tab switch
+			document.querySelectorAll('[data-bs-toggle="tab"]').forEach(btn => {
+				btn.addEventListener('shown.bs.tab', () => {
+					[ngoForm, volForm].forEach(f => f.querySelectorAll('.is-valid,.is-invalid').forEach(el => el.classList.remove('is-valid','is-invalid')));
+				});
+			});
+		});
+
 		ngoForm.addEventListener('submit', async (e) => {
 			e.preventDefault();
+			const submitBtn = ngoForm.querySelector('button[type="submit"]');
+			let allValid = true;
+			ngoForm.querySelectorAll('[data-validate]').forEach((field) => { if (window.FormValidator && !window.FormValidator.validateField(field)) allValid = false; });
+			if (!allValid) { window.ToastManager?.error('Please fix validation errors'); return; }
 			const payload = Object.fromEntries(new FormData(ngoForm).entries());
 			try {
-				await window.ResQApi.registerNGO(payload);
-				result.className = 'alert alert-success';
-				result.textContent = 'NGO registration submitted for approval.';
-				result.classList.remove('d-none');
+				await window.ResQApi.registerNGO(payload, { buttonElement: submitBtn });
+				window.ToastManager?.success('NGO registration submitted for approval.');
 				ngoForm.reset();
+				ngoForm.querySelectorAll('.is-valid,.is-invalid').forEach(el => el.classList.remove('is-valid','is-invalid'));
 			} catch (err) {
-				result.className = 'alert alert-danger';
-				result.textContent = err.message;
-				result.classList.remove('d-none');
+				if (err && err.status === 409) window.ToastManager?.error('Email already registered.');
 			}
 		});
 
 		volForm.addEventListener('submit', async (e) => {
 			e.preventDefault();
+			const submitBtn = volForm.querySelector('button[type="submit"]');
+			let allValid = true;
+			volForm.querySelectorAll('[data-validate]').forEach((field) => { if (window.FormValidator && !window.FormValidator.validateField(field)) allValid = false; });
+			if (!allValid) { window.ToastManager?.error('Please fix validation errors'); return; }
 			const payload = Object.fromEntries(new FormData(volForm).entries());
 			try {
-				await window.ResQApi.registerVolunteer(payload);
-				result.className = 'alert alert-success';
-				result.textContent = 'Volunteer registration submitted for approval.';
-				result.classList.remove('d-none');
+				await window.ResQApi.registerVolunteer(payload, { buttonElement: submitBtn });
+				window.ToastManager?.success('Volunteer registration submitted for approval.');
 				volForm.reset();
+				volForm.querySelectorAll('.is-valid,.is-invalid').forEach(el => el.classList.remove('is-valid','is-invalid'));
 			} catch (err) {
-				result.className = 'alert alert-danger';
-				result.textContent = err.message;
-				result.classList.remove('d-none');
+				if (err && err.status === 409) window.ToastManager?.error('Email already registered.');
 			}
 		});
 	</script>

@@ -130,3 +130,59 @@ class Donation(db.Model, TimestampMixin):
 	ngo_id = db.Column(db.Integer, db.ForeignKey("ngos.id"), nullable=True)
 
 	ngo = db.relationship("NGO")
+
+
+class PoliceStation(db.Model, TimestampMixin):
+	__tablename__ = "police_stations"
+
+	id = db.Column(db.Integer, primary_key=True)
+	name = db.Column(db.String(255), nullable=False)
+	address = db.Column(db.String(255), nullable=True)
+	phone = db.Column(db.String(30), nullable=True)
+	location = db.Column(db.String(255), nullable=True)
+	station_code = db.Column(db.String(20), nullable=True)
+	is_24x7 = db.Column(db.Boolean, default=True, nullable=False)
+	jurisdiction = db.Column(db.String(255), nullable=True)
+	officer_in_charge = db.Column(db.String(255), nullable=True)
+
+
+class BloodBank(db.Model, TimestampMixin):
+	__tablename__ = "blood_banks"
+
+	id = db.Column(db.Integer, primary_key=True)
+	name = db.Column(db.String(255), nullable=False)
+	address = db.Column(db.String(255), nullable=True)
+	phone = db.Column(db.String(30), nullable=True)
+	location = db.Column(db.String(255), nullable=True)
+	is_24x7 = db.Column(db.Boolean, default=False, nullable=False)
+	blood_types_available = db.Column(db.Text, nullable=True)  # JSON string of available blood types
+	contact_person = db.Column(db.String(255), nullable=True)
+	license_number = db.Column(db.String(100), nullable=True)
+
+
+class FireStation(db.Model, TimestampMixin):
+	__tablename__ = "fire_stations"
+
+	id = db.Column(db.Integer, primary_key=True)
+	name = db.Column(db.String(255), nullable=False)
+	address = db.Column(db.String(255), nullable=True)
+	phone = db.Column(db.String(30), nullable=True)
+	location = db.Column(db.String(255), nullable=True)
+	station_code = db.Column(db.String(20), nullable=True)
+	is_24x7 = db.Column(db.Boolean, default=True, nullable=False)
+	equipment_available = db.Column(db.Text, nullable=True)  # JSON string of equipment
+	chief_officer = db.Column(db.String(255), nullable=True)
+
+
+class EmergencyContact(db.Model, TimestampMixin):
+	__tablename__ = "emergency_contacts"
+
+	id = db.Column(db.Integer, primary_key=True)
+	name = db.Column(db.String(255), nullable=False)
+	phone = db.Column(db.String(30), nullable=False)
+	email = db.Column(db.String(255), nullable=True)
+	service_type = db.Column(db.String(50), nullable=False)  # Police, Fire, Medical, etc.
+	location = db.Column(db.String(255), nullable=True)
+	is_24x7 = db.Column(db.Boolean, default=True, nullable=False)
+	description = db.Column(db.Text, nullable=True)
+	priority_level = db.Column(db.Integer, default=1, nullable=False)  # 1=High, 2=Medium, 3=Low

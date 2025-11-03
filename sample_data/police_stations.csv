@@ -1,0 +1,6 @@
+name,address,phone,location,station_code,is_24x7,jurisdiction,officer_in_charge
+Mumbai Central Police Station,1 MG Road,Mumbai,+91-9876543225,Mumbai,MCP001,true,South Mumbai,Inspector Rajesh Kumar
+Delhi Police Station CP,Connaught Place,Delhi,+91-9876543226,Delhi,DCP001,true,Central Delhi,Inspector Priya Sharma
+Bangalore City Police Station,Brigade Road,Bangalore,+91-9876543227,Bangalore,BCP001,true,Bangalore Urban,Inspector Suresh Reddy
+Chennai Central Police Station,Anna Salai,Chennai,+91-9876543228,Chennai,CCP001,true,Chennai Central,Inspector Lakshmi Devi
+Pune City Police Station,FC Road,Pune,+91-9876543229,Pune,PCP001,true,Pune City,Inspector Vikram Joshi

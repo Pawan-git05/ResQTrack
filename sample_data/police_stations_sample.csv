@@ -1,0 +1,4 @@
+name,address,phone,location,station_code,jurisdiction,officer_in_charge,is_24x7
+Central Police Station,100 Law Street,555-1001,Downtown,CPS001,"Downtown, Business District",Chief John Smith,true
+North Police Station,200 North Avenue,555-1002,North Side,NPS001,"North Side, Residential",Lt. Jane Doe,true
+South Police Station,300 South Boulevard,555-1003,South Side,SPS001,"South Side, Industrial",Sgt. Bob Johnson,false

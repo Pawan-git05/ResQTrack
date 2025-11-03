@@ -1,0 +1,6 @@
+name,email,phone,location,expertise,availability,approved
+John Smith,john.smith@email.com,+91-9876543215,Mumbai,pickup,weekends,true
+Sarah Johnson,sarah.j@email.com,+91-9876543216,Delhi,first aid,evenings,true
+Mike Wilson,mike.w@email.com,+91-9876543217,Bangalore,foster,flexible,false
+Lisa Brown,lisa.b@email.com,+91-9876543218,Chennai,pickup,weekdays,true
+David Lee,david.l@email.com,+91-9876543219,Pune,first aid,weekends,false

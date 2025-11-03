@@ -1,0 +1,4 @@
+name,address,phone,location,is_24x7,treatment_types
+City General Hospital,123 Main Street,555-0101,Downtown,true,"Emergency, Surgery, ICU"
+Metro Medical Center,456 Oak Avenue,555-0102,Suburbs,false,"General Medicine, Pediatrics"
+Regional Hospital,789 Pine Road,555-0103,Industrial Area,true,"Emergency, Trauma, Cardiology"

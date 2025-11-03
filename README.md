@@ -10,6 +10,8 @@ The project is intentionally simple to run locally (no heavy frontend tooling) b
 - Hospital directory helps route animals to the right care.
 - Donors can record donations with automatic email receipts (if SMTP configured).
 - Admin/NGO actions use JWT for protected routes.
+- **NEW**: Comprehensive data integration system for emergency services (police, fire, blood banks, etc.)
+- **NEW**: Interactive data dashboard for importing, visualizing, and managing multiple datasets.
 
 ## Tech Stack
 - **Backend**: Flask, SQLAlchemy, Alembic (Flask‑Migrate), JWT, Flask‑Mail, Flask‑CORS, SQLite (default) or any SQL via `DATABASE_URL`.
@@ -49,6 +51,11 @@ python -m flask db upgrade
 
 Optional: load sample data (inspect `docs/sql/sample_data.sql`).
 
+**NEW**: Import comprehensive emergency services data:
+```bash
+python import_sample_data.py
+```
+
 ### 4) Run the backend (API)
 ```bash
 python backend/wsgi.py
@@ -62,6 +69,12 @@ cd frontend
 python -m http.server 8000
 ```
 Visit `http://localhost:8000/index.html`.
+
+**NEW**: Access the Data Dashboard at `http://localhost:8000/data-dashboard.html` for:
+- Import/export CSV datasets
+- Visualize emergency services distribution
+- Manage NGOs, volunteers, hospitals, police stations, blood banks, fire stations
+- View real-time statistics and analytics
 
 Front‑to‑back integration is configured via `frontend/assets/js/api.js`:
 ```js
@@ -113,6 +126,14 @@ Base URL: `http://localhost:5000`
 - `POST /uploads` (multipart, field `file`) → `201 { filename, url }`
 - `GET /uploads/<filename>` → serves the uploaded file
 
+### Data Integration (NEW)
+- `POST /data/import/<type>` (JWT required) → `201 { message, stats }`
+  - types: `ngos`, `volunteers`, `hospitals`, `police-stations`, `blood-banks`, `fire-stations`
+- `GET /data/export/<type>` (JWT required) → `200 { message, download_url }`
+- `GET /data/statistics` (JWT required) → `200 { statistics, location_distribution }`
+- `GET /data/emergency-contacts` → `200 { contacts: [...] }`
+- `GET /data/nearby-services?location=<city>&service_type=<type>` → `200 { services: [...] }`
+
 ### Common Errors
 - `400` Missing/invalid fields
 - `401` Invalid credentials or missing token
@@ -121,6 +142,7 @@ Base URL: `http://localhost:5000`
 ## Data model (high‑level)
 - `AnimalCase` with `case_code`, contact/location, type, urgency, notes, optional `media_url`, and `status`.
 - `NGO`, `Volunteer`, `Hospital`, `Donation` entities with essential fields.
+- **NEW**: `PoliceStation`, `BloodBank`, `FireStation`, `EmergencyContact` for comprehensive emergency services.
 - See `docs/architecture/ERD.md` and `backend/app/models.py` for complete definitions.
 
 ## Configuration & Operations
@@ -138,16 +160,22 @@ backend/
     extensions.py
     utils.py
     mailer.py
+    data_integration.py  # NEW: Data import/export system
   config.py
   wsgi.py
 frontend/
-  index.html report.html register.html donate.html hospitals.html
+  index.html report.html register.html donate.html hospitals.html data-dashboard.html  # NEW
   assets/css/styles.css
-  assets/js/api.js app.js
+  assets/js/api.js app.js data-dashboard.js  # NEW
 docs/
   PRD.md
   architecture/ERD.md, DFD.md
   sql/schema.sql, sample_data.sql
+  DATA_INTEGRATION.md  # NEW: Comprehensive data integration guide
+  DATA_INTEGRATION_QUICK_REFERENCE.md  # NEW: Quick reference
+sample_data/  # NEW: Sample CSV files
+  ngos.csv volunteers.csv hospitals.csv police_stations.csv blood_banks.csv fire_stations.csv
+import_sample_data.py  # NEW: Data import script
 ```
 
 ## Contributing

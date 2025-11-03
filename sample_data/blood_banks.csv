@@ -1,0 +1,6 @@
+name,address,phone,location,is_24x7,blood_types_available,contact_person,license_number
+Mumbai Blood Bank,123 Hospital Road,Mumbai,+91-9876543230,Mumbai,false,"A+,B+,O+,AB+",Dr. Rajesh Patel,BB001
+Delhi Blood Center,456 Medical Complex,Delhi,+91-9876543231,Delhi,true,"A+,A-,B+,B-,O+,O-,AB+,AB-",Dr. Priya Singh,BB002
+Bangalore Blood Services,789 Health Plaza,Bangalore,+91-9876543232,Bangalore,false,"A+,B+,O+,AB+",Dr. Suresh Kumar,BB003
+Chennai Blood Bank,321 Medical Center,Chennai,+91-9876543233,Chennai,true,"A+,A-,B+,B-,O+,O-",Dr. Lakshmi Reddy,BB004
+Pune Blood Center,654 Health Hub,Pune,+91-9876543234,Pune,false,"A+,B+,O+,AB+",Dr. Vikram Desai,BB005

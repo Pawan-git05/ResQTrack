@@ -1,0 +1,6 @@
+name,email,phone,location,operating_zones,approved
+Animal Rescue Foundation,contact@arf.org,+91-9876543210,Mumbai,Mumbai,Thane,Navi Mumbai,true
+Wildlife Protection Society,wps@wildlife.org,+91-9876543211,Delhi,Delhi,NCR,true
+Pet Care Foundation,pcf@petcare.org,+91-9876543212,Bangalore,Bangalore Urban,Bangalore Rural,false
+Stray Animal Help,sah@strayhelp.org,+91-9876543213,Chennai,Chennai,Kanchipuram,true
+Animal Welfare Trust,awt@animaltrust.org,+91-9876543214,Pune,Pune,Satara,false

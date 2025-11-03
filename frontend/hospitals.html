@@ -6,6 +6,15 @@
 	<title>Hospitals - ResQTrack</title>
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
 	<link href="./assets/css/styles.css" rel="stylesheet" />
+	<script src="./config.js"></script>
+	<!-- Leaflet CSS -->
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+	      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+	      crossorigin=""/>
+	<!-- Leaflet JS -->
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+	        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+	        crossorigin=""></script>
 </head>
 <body>
 	<nav class="navbar navbar-expand-lg bg-body-tertiary">
@@ -15,18 +24,174 @@
 	</nav>
 	<div class="container py-4">
 		<h1 class="h4 mb-3">Hospital Directory</h1>
-		<div id="list" class="row g-3"></div>
+		
+		<!-- View Toggle -->
+		<div class="mb-3">
+			<div class="btn-group" role="group">
+				<button type="button" class="btn btn-outline-primary active" id="listViewBtn" onclick="switchView('list')">
+					📋 List View
+				</button>
+				<button type="button" class="btn btn-outline-primary" id="mapViewBtn" onclick="switchView('map')">
+					🗺️ Map View
+				</button>
+			</div>
+		</div>
+		
+		<!-- List View -->
+		<div id="listView" class="view-container">
+			<div id="list" class="row g-3"></div>
+		</div>
+		
+		<!-- Map View -->
+		<div id="mapView" class="view-container d-none">
+			<div id="map" style="height: 500px; border-radius: 8px; border: 1px solid #dee2e6;"></div>
+		</div>
 	</div>
 
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="./assets/js/app.js"></script>
 	<script src="./assets/js/api.js"></script>
 	<script>
-		async function load() {
+		let map = null;
+		let hospitalsData = [];
+		let markers = [];
+		
+		function skeletonCards(count=4) {
+			return Array.from({length: count}).map(() => `
+				<div class='col-md-6'>
+					<div class='card h-100'>
+						<div class='card-body'>
+							<div class='skeleton' style='height:24px; width:60%; margin-bottom:8px;'></div>
+							<div class='skeleton' style='height:14px; width:90%; margin-bottom:6px;'></div>
+							<div class='skeleton' style='height:14px; width:70%; margin-bottom:6px;'></div>
+							<div class='skeleton' style='height:14px; width:50%;'></div>
+						</div>
+					</div>
+				</div>
+			`).join('');
+		}
+		
+		function switchView(view) {
+			const listView = document.getElementById('listView');
+			const mapView = document.getElementById('mapView');
+			const listBtn = document.getElementById('listViewBtn');
+			const mapBtn = document.getElementById('mapViewBtn');
+			
+			if (view === 'list') {
+				listView.classList.remove('d-none');
+				mapView.classList.add('d-none');
+				listBtn.classList.add('active');
+				mapBtn.classList.remove('active');
+			} else {
+				listView.classList.add('d-none');
+				mapView.classList.remove('d-none');
+				listBtn.classList.remove('active');
+				mapBtn.classList.add('active');
+				
+				// Initialize map if not already done
+				if (!map) {
+					initLeafletMap();
+				}
+			}
+		}
+		
+		function initLeafletMap() {
+			// Initialize Leaflet map centered on India
+			map = L.map('map').setView([20.5937, 78.9629], 5);
+			
+			// Add OpenStreetMap tiles
+			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+				maxZoom: 19
+			}).addTo(map);
+			
+			// Add markers for hospitals
+			addHospitalMarkers();
+		}
+		
+		function addHospitalMarkers() {
+			if (!map) return;
+			
+			// Clear existing markers
+			markers.forEach(marker => map.removeLayer(marker));
+			markers = [];
+			
+			hospitalsData.forEach(hospital => {
+				// Try to geocode the location if we don't have coordinates
+				if (hospital.location) {
+					geocodeLocation(hospital.location, hospital);
+				}
+			});
+		}
+		
+		async function geocodeLocation(location, hospital) {
 			try {
-				const res = await window.ResQApi.listHospitals();
-				const list = document.getElementById('list');
-				list.innerHTML = (res.items || []).map(h => `
-					<div class='col-md-6'>
+				// Use Nominatim API for geocoding
+				const response = await fetch(
+					`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1&countrycodes=in`
+				);
+				
+				if (!response.ok) {
+					throw new Error('Geocoding request failed');
+				}
+				
+				const results = await response.json();
+				
+				if (results.length > 0) {
+					const lat = parseFloat(results[0].lat);
+					const lon = parseFloat(results[0].lon);
+					
+					// Create custom hospital icon
+					const hospitalIcon = L.divIcon({
+						className: 'custom-hospital-icon',
+						html: '🏥',
+						iconSize: [30, 30],
+						iconAnchor: [15, 15]
+					});
+					
+					// Add marker
+					const marker = L.marker([lat, lon], { icon: hospitalIcon }).addTo(map);
+					
+					// Create popup content
+					const popupContent = `
+						<div style="min-width: 200px;">
+							<h6 style="margin: 0 0 8px 0; color: #333;">${hospital.name}</h6>
+							${hospital.address ? `<p style="margin: 0 0 4px 0; font-size: 0.9em;"><strong>Address:</strong> ${hospital.address}</p>` : ''}
+							${hospital.phone ? `<p style="margin: 0 0 4px 0; font-size: 0.9em;"><strong>Phone:</strong> <a href="tel:${hospital.phone}">${hospital.phone}</a></p>` : ''}
+							${hospital.treatment_types ? `<p style="margin: 0 0 4px 0; font-size: 0.9em;"><strong>Services:</strong> ${hospital.treatment_types}</p>` : ''}
+							<p style="margin: 0; font-size: 0.9em;">
+								<span class="badge ${hospital.is_24x7 ? 'bg-success' : 'bg-secondary'}">${hospital.is_24x7 ? '24x7 Available' : 'Limited Hours'}</span>
+							</p>
+						</div>
+					`;
+					
+					// Bind popup to marker
+					marker.bindPopup(popupContent);
+					
+					markers.push(marker);
+				} else {
+					console.warn('Geocoding failed for:', location);
+				}
+			} catch (error) {
+				console.error('Geocoding error for:', location, error);
+			}
+		}
+
+		async function load() {
+			const list = document.getElementById('list');
+			window.LoadingOverlay?.show();
+			list.innerHTML = skeletonCards(4);
+			try {
+				const res = await window.ResQApi.listHospitals({ showToast: false });
+				const items = res.items || [];
+				hospitalsData = items; // Store data for map
+				
+				if (items.length === 0) {
+					list.innerHTML = "<div class='col-12 text-center text-muted'>No hospitals found</div>";
+					return;
+				}
+				list.innerHTML = items.map(h => `
+					<div class='col-md-6 fade-in'>
 						<div class='card h-100'>
 							<div class='card-body'>
 								<h5 class='card-title'>${h.name}</h5>
@@ -37,11 +202,20 @@
 						</div>
 					</div>
 				`).join('');
+				
+				// If map is already initialized, refresh markers
+				if (map) {
+					addHospitalMarkers();
+				}
 			} catch (e) {
-				console.error(e);
+				window.ToastManager?.error('Failed to load hospitals');
+				list.innerHTML = "<div class='col-12 text-center text-danger'>Error loading hospitals. <button class='btn btn-sm btn-outline-secondary ms-2' id='retry'>Retry</button></div>";
+				document.getElementById('retry')?.addEventListener('click', load);
+			} finally {
+				window.LoadingOverlay?.hide();
 			}
 		}
-		load();
+		document.addEventListener('DOMContentLoaded', load);
 	</script>
 </body>
 </html>

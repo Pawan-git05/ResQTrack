@@ -23,11 +23,13 @@
 			</div>
 			<div class="col-md-6">
 				<label class="form-label">Email</label>
-				<input name="donor_email" type="email" class="form-control" />
+				<input name="donor_email" type="email" class="form-control" data-validate="email" />
+				<div class="invalid-feedback"></div>
 			</div>
 			<div class="col-md-4">
 				<label class="form-label">Amount</label>
-				<input name="amount" type="number" min="1" step="1" class="form-control" required />
+				<input name="amount" type="number" min="1" step="1" class="form-control" required data-validate="required|number" />
+				<div class="invalid-feedback"></div>
 			</div>
 			<div class="col-md-4">
 				<label class="form-label">Currency</label>
@@ -38,38 +40,57 @@
 			</div>
 			<div class="col-md-4">
 				<label class="form-label">Category</label>
-				<select name="category" class="form-select" required>
+				<select name="category" class="form-select" required data-validate="required">
 					<option value="Medical Aid">Medical Aid</option>
 					<option value="Food Supplies">Food Supplies</option>
 					<option value="Shelter / Rehabilitation">Shelter / Rehabilitation</option>
 				</select>
+				<div class="invalid-feedback"></div>
 			</div>
 			<div class="col-12">
 				<button class="btn btn-gradient-green" type="submit">Donate</button>
 			</div>
 		</form>
-		<div id="result" class="alert d-none mt-3" role="alert"></div>
+		<div id="result" class="alert d-none mt-3" role="alert" style="display:none"></div>
 	</div>
 
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="./assets/js/app.js"></script>
 	<script src="./assets/js/api.js"></script>
 	<script>
 		const form = document.getElementById('donation-form');
 		const result = document.getElementById('result');
+		document.addEventListener('DOMContentLoaded', () => {
+			if (window.FormValidator) window.FormValidator.attachRealTimeValidation(form);
+			const amountField = form.querySelector('input[name="amount"]');
+			amountField.addEventListener('input', () => {
+				const value = Number(amountField.value);
+				if (!Number.isNaN(value) && value > 0) {
+					amountField.classList.add('is-valid');
+					amountField.classList.remove('is-invalid');
+				} else if (amountField.value) {
+					amountField.classList.add('is-invalid');
+					amountField.classList.remove('is-valid');
+				}
+			});
+		});
 		form.addEventListener('submit', async (e) => {
 			e.preventDefault();
+			const submitBtn = form.querySelector('button[type="submit"]');
+			let allValid = true;
+			form.querySelectorAll('[data-validate]').forEach((field) => { if (window.FormValidator && !window.FormValidator.validateField(field)) allValid = false; });
+			const amt = Number(form.amount.value);
+			if (Number.isNaN(amt) || amt <= 0) { allValid = false; form.amount.classList.add('is-invalid'); }
+			if (!allValid) { window.ToastManager?.error('Please enter a valid amount and required fields'); return; }
 			const payload = Object.fromEntries(new FormData(form).entries());
 			payload.amount = Number(payload.amount);
 			try {
-				const resp = await window.ResQApi.createDonation(payload);
-				result.className = 'alert alert-success';
-				result.textContent = 'Thank you for your donation! A receipt was emailed to you.';
-				result.classList.remove('d-none');
+				await window.ResQApi.createDonation(payload, { buttonElement: submitBtn });
+				window.ToastManager?.success('Thank you for your donation!');
 				form.reset();
+				form.querySelectorAll('.is-valid,.is-invalid').forEach(el => el.classList.remove('is-valid','is-invalid'));
 			} catch (err) {
-				result.className = 'alert alert-danger';
-				result.textContent = err.message;
-				result.classList.remove('d-none');
+				// handled globally
 			}
 		});
 	</script>

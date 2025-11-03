@@ -1,0 +1,4 @@
+name,address,phone,location,blood_types_available,contact_person,license_number,is_24x7
+City Blood Bank,150 Health Drive,555-2001,Medical District,"A+, A-, B+, B-, O+, O-, AB+, AB-",Dr. Sarah Wilson,BB001,true
+Regional Blood Center,250 Life Street,555-2002,Suburbs,"A+, A-, B+, B-, O+, O-",Nurse Mike Brown,BB002,false
+Emergency Blood Bank,350 Crisis Avenue,555-2003,Emergency Zone,"O+, O-, A+, A-",Dr. Lisa Davis,BB003,true
