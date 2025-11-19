@@ -1,5 +1,9 @@
 import sys
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 # Ensure project root is on sys.path when running as a script
 CURRENT_DIR = os.path.dirname(__file__)
@@ -14,5 +18,7 @@ except Exception:
 
 application = create_app()
 
+from waitress import serve
+
 if __name__ == "__main__":
-	application.run(host="0.0.0.0", port=5000, debug=True)
+    serve(application, host="0.0.0.0", port=5000)

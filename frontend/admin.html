@@ -540,7 +540,12 @@
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 	<script src="./assets/js/app.js"></script>
 	<script src="./assets/js/api.js"></script>
+
 	<script>
+		// Make sure API base is consistent across files (you can override via config.js)
+		const BASE_API = (window.CONFIG && window.CONFIG.API_BASE_URL) ? window.CONFIG.API_BASE_URL.replace(/\/$/, '') : 'http://127.0.0.1:5000/api';
+		const API_PREFIX = BASE_API; // e.g. "http://127.0.0.1:5000/api"
+
 		// Admin authentication
 		let adminToken = null;
 		
@@ -553,7 +558,7 @@
 		
 		async function adminLogin() {
 			try {
-				const response = await fetch('http://localhost:5000/auth/login', {
+				const response = await fetch(`${API_PREFIX}/auth/login`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
@@ -563,11 +568,19 @@
 					})
 				});
 				const data = await response.json();
-				if (data.access_token) {
-					adminToken = data.access_token;
+				// accept either access_token or token in response
+				if (data.access_token || data.token) {
+					adminToken = data.access_token || data.token;
+					localStorage.setItem('adminToken', adminToken);
 					return true;
 				}
-				throw new Error('Login failed');
+				// some debug-friendly backends return { message, id } when JWT disabled; try to handle gracefully
+				if (data.message && data.id) {
+					// no token available but login "ok" — continue without token
+					console.warn('Login returned no token; continuing without auth header.');
+					return true;
+				}
+				throw new Error(data.error || data.message || 'Login failed');
 			} catch (error) {
 				console.error('Admin login failed:', error);
 				window.ToastManager?.error('Admin authentication failed');
@@ -576,10 +589,9 @@
 		}
 		
 		function getAuthHeaders() {
-			return {
-				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${adminToken}`
-			};
+			const headers = { 'Content-Type': 'application/json' };
+			if (adminToken) headers['Authorization'] = `Bearer ${adminToken}`;
+			return headers;
 		}
 		
 		// Admin API functions
@@ -587,69 +599,70 @@
 			getAllCases: async () => {
 				try { 
 					if (!adminToken) await adminLogin();
-					return await (await fetch('http://localhost:5000/admin/cases', { headers: getAuthHeaders() })).json(); 
+					return await (await fetch(`${API_PREFIX}/admin/cases`, { headers: getAuthHeaders() })).json(); 
 				}
 				catch (e) { throw e; }
 			},
 			getAllNGOs: async () => {
 				try { 
 					if (!adminToken) await adminLogin();
-					return await (await fetch('http://localhost:5000/admin/ngos', { headers: getAuthHeaders() })).json(); 
+					return await (await fetch(`${API_PREFIX}/admin/ngos`, { headers: getAuthHeaders() })).json(); 
 				}
 				catch (e) { throw e; }
 			},
 			getAllVolunteers: async () => {
 				try { 
 					if (!adminToken) await adminLogin();
-					return await (await fetch('http://localhost:5000/admin/volunteers', { headers: getAuthHeaders() })).json(); 
+					return await (await fetch(`${API_PREFIX}/admin/volunteers`, { headers: getAuthHeaders() })).json(); 
 				}
 				catch (e) { throw e; }
 			},
 			getAllDonations: async () => {
 				try { 
 					if (!adminToken) await adminLogin();
-					return await (await fetch('http://localhost:5000/admin/donations', { headers: getAuthHeaders() })).json(); 
+					return await (await fetch(`${API_PREFIX}/admin/donations`, { headers: getAuthHeaders() })).json(); 
 				}
 				catch (e) { throw e; }
 			},
 			getAllHospitals: async () => {
 				try { 
 					if (!adminToken) await adminLogin();
-					return await (await fetch('http://localhost:5000/admin/hospitals', { headers: getAuthHeaders() })).json(); 
+					return await (await fetch(`${API_PREFIX}/admin/hospitals`, { headers: getAuthHeaders() })).json(); 
 				}
 				catch (e) { throw e; }
 			},
 			getAllPoliceStations: async () => {
 				try { 
 					if (!adminToken) await adminLogin();
-					return await (await fetch('http://localhost:5000/admin/police-stations', { headers: getAuthHeaders() })).json(); 
+					return await (await fetch(`${API_PREFIX}/admin/police-stations`, { headers: getAuthHeaders() })).json(); 
 				}
 				catch (e) { throw e; }
 			},
 			getAllBloodBanks: async () => {
 				try { 
 					if (!adminToken) await adminLogin();
-					return await (await fetch('http://localhost:5000/admin/blood-banks', { headers: getAuthHeaders() })).json(); 
+					return await (await fetch(`${API_PREFIX}/admin/blood-banks`, { headers: getAuthHeaders() })).json(); 
 				}
 				catch (e) { throw e; }
 			},
 			getAllFireStations: async () => {
 				try { 
 					if (!adminToken) await adminLogin();
-					return await (await fetch('http://localhost:5000/admin/fire-stations', { headers: getAuthHeaders() })).json(); 
+					return await (await fetch(`${API_PREFIX}/admin/fire-stations`, { headers: getAuthHeaders() })).json(); 
 				}
 				catch (e) { throw e; }
 			},
 			getAllEmergencyContacts: async () => {
 				try { 
 					if (!adminToken) await adminLogin();
-					return await (await fetch('http://localhost:5000/admin/emergency-contacts', { headers: getAuthHeaders() })).json(); 
+					return await (await fetch(`${API_PREFIX}/admin/emergency-contacts`, { headers: getAuthHeaders() })).json(); 
 				}
 				catch (e) { throw e; }
 			},
 		};
 
 		function formatDate(dateString) {
+			if (!dateString) return '-';
 			return new Date(dateString).toLocaleDateString() + ' ' + new Date(dateString).toLocaleTimeString();
 		}
 
@@ -683,9 +696,9 @@
 					tbody.innerHTML = data.cases.map(case_ => `
 						<tr>
 							<td><strong>${case_.case_code}</strong></td>
-							<td>${case_.reporter_name || 'Anonymous'}<br><small>${case_.reporter_phone}</small></td>
-							<td>${case_.location}</td>
-							<td>${case_.animal_type}</td>
+							<td>${case_.reporter_name || 'Anonymous'}<br><small>${case_.reporter_phone || ''}</small></td>
+							<td>${case_.location || '-'}</td>
+							<td>${case_.animal_type || '-'}</td>
 							<td>${getUrgencyBadge(case_.urgency)}</td>
 							<td>${getStatusBadge(case_.status)}</td>
 							<td><small>${formatDate(case_.created_at)}</small></td>
@@ -762,7 +775,7 @@
 						<tr>
 							<td>${donation.donor_name || 'Anonymous'}<br><small>${donation.donor_email || ''}</small></td>
 							<td><strong>${donation.currency} ${donation.amount}</strong></td>
-							<td>${donation.category}</td>
+							<td>${donation.category || '-'}</td>
 							<td><small>${donation.payment_id || '-'}</small></td>
 							<td><small>${formatDate(donation.created_at)}</small></td>
 						</tr>
@@ -982,11 +995,9 @@
 			try {
 				if (!adminToken) await adminLogin();
 				
-				const response = await fetch(`http://localhost:5000/admin/upload-csv/${currentServiceType}`, {
+				const response = await fetch(`${API_PREFIX}/admin/upload-csv/${currentServiceType}`, {
 					method: 'POST',
-					headers: {
-						'Authorization': `Bearer ${adminToken}`
-					},
+					headers: (adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {}),
 					body: formData
 				});
 				
@@ -1000,17 +1011,20 @@
 				resultDiv.classList.remove('d-none');
 				
 				if (response.ok) {
+					// backend may use 'imported_count' or 'imported' — handle both
+					const imported = result.imported_count ?? result.imported ?? 0;
+					const errors = result.errors ?? result.error_list ?? result.errors ?? [];
 					resultDiv.innerHTML = `
 						<div class="alert alert-success">
 							<h6>✅ Upload Successful!</h6>
-							<p><strong>Imported:</strong> ${result.imported_count} records</p>
-							${result.errors && result.errors.length > 0 ? 
-								`<p><strong>Errors:</strong> ${result.errors.length}</p>
-								<details><summary>View Errors</summary><ul>${result.errors.map(e => `<li>${e}</li>`).join('')}</ul></details>` 
+							<p><strong>Imported:</strong> ${imported} records</p>
+							${errors && errors.length > 0 ? 
+								`<p><strong>Errors:</strong> ${errors.length}</p>
+								<details><summary>View Errors</summary><ul>${errors.map(e => `<li>${e}</li>`).join('')}</ul></details>` 
 								: ''}
 						</div>
 					`;
-					window.ToastManager?.success(`Successfully imported ${result.imported_count} records`);
+					window.ToastManager?.success(`Successfully imported ${imported} records`);
 					
 					// Refresh the relevant data
 					setTimeout(() => {
@@ -1020,10 +1034,10 @@
 					resultDiv.innerHTML = `
 						<div class="alert alert-danger">
 							<h6>❌ Upload Failed</h6>
-							<p>${result.error || 'Unknown error occurred'}</p>
+							<p>${result.error || result.message || 'Unknown error occurred'}</p>
 						</div>
 					`;
-					window.ToastManager?.error(result.error || 'Upload failed');
+					window.ToastManager?.error(result.error || result.message || 'Upload failed');
 				}
 			} catch (error) {
 				document.getElementById('uploadProgress').classList.add('d-none');
@@ -1051,8 +1065,7 @@
 			
 			const fileName = sampleFiles[serviceType];
 			if (fileName) {
-				const base = (window.CONFIG && window.CONFIG.API_BASE_URL) ? window.CONFIG.API_BASE_URL : 'http://localhost:5000';
-				window.open(`${base}/data/sample/${fileName}`, '_blank');
+				window.open(`${API_PREFIX}/data/sample/${fileName}`, '_blank');
 			}
 		}
 
@@ -1405,7 +1418,7 @@
 				if (!adminToken) await adminLogin();
 				
 				const endpoint = currentLocationType === 'police-station' ? 'police-stations' : currentLocationType + 's';
-				const response = await fetch(`http://localhost:5000/admin/${endpoint}`, {
+				const response = await fetch(`${API_PREFIX}/admin/${endpoint}`, {
 					method: 'POST',
 					headers: getAuthHeaders(),
 					body: JSON.stringify(formData)

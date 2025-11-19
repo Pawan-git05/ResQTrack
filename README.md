@@ -28,7 +28,7 @@ pip install -r requirements.txt
 ```
 cp .env.example .env  # or copy manually on Windows
 ```
-Keep defaults for SQLite, and set `ALLOWED_ORIGINS=http://localhost:8000`.
+Defaults use the MySQL connector URI in `.env.example`; set `ALLOWED_ORIGINS=http://localhost:8000`.
 
 3) Initialize the database
 ```
@@ -78,7 +78,7 @@ ResQTrack/
 
 ### Prerequisites
 - Python 3.11+
-- Optional: MySQL 8+ (if not using SQLite)
+- Optional: MySQL 8+ (uses MySQL connector URI)
 - Optional: Docker and Docker Compose
 
 ### 1) Clone and create a virtual environment
@@ -102,7 +102,7 @@ cp .env.example .env    # Windows PowerShell: cp .env.example .env
 ```
 Important variables:
 - `SECRET_KEY`, `JWT_SECRET_KEY`
-- `DATABASE_URL` (defaults to SQLite if omitted)
+- `DATABASE_URL` (set to a MySQL connector URI, e.g. `mysql+mysqlconnector://root:1234@localhost/resqtrack`)
 - `MAIL_*` for SMTP
 - `ALLOWED_ORIGINS` for CORS in production (comma‑separated list)
 - `UPLOAD_FOLDER`, `MAX_CONTENT_LENGTH` (bytes)
@@ -110,7 +110,7 @@ Important variables:
 - Optional rate limit storage: `RATELIMIT_STORAGE_URI` (e.g., `redis://redis:6379`)
 
 ### 3) Initialize the database
-SQLite (default):
+Using the `DATABASE_URL` from your `.env` (MySQL connector URI):
 ```bash
 set FLASK_APP=backend/wsgi.py       # Windows
 flask db upgrade
@@ -119,7 +119,7 @@ flask db upgrade
 export FLASK_APP=backend/wsgi.py    # macOS/Linux
 flask db upgrade
 ```
-For MySQL, set `DATABASE_URL` to e.g. `mysql://user:password@localhost:3306/resqtrack` and run `flask db upgrade`.
+For MySQL, set `DATABASE_URL` to e.g. `mysql+mysqlconnector://user:password@localhost:3306/resqtrack` and run `flask db upgrade`.
 
 ### 4) Run the app locally
 ```bash
@@ -144,7 +144,7 @@ docker-compose up --build
 - Redis: localhost:6379
 
 Notes:
-- By default, the app uses `DATABASE_URL` from your `.env`. If not set, it falls back to SQLite.
+- By default, the app uses `DATABASE_URL` from your `.env` (use a MySQL connector URI, e.g. `mysql+mysqlconnector://root:1234@localhost/resqtrack`).
 - Volumes persist uploads and logs.
 - CORS can be controlled via `ALLOWED_ORIGINS` env (comma‑separated).
 

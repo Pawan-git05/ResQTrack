@@ -20,7 +20,7 @@ def seed_database():
     app = create_app()
     
     with app.app_context():
-        print("🌱 Seeding database...")
+        print("Seeding database...")
         
         # Create admin user
         existing_admin = Admin.query.filter_by(email='admin@resqtrack.com').first()
@@ -31,9 +31,9 @@ def seed_database():
                 password_hash=hash_password('admin123')
             )
             db.session.add(admin)
-            print("✅ Created admin user (email: admin@resqtrack.com, password: admin123)")
+            print("Created admin user (email: admin@resqtrack.com, password: admin123)")
         else:
-            print("ℹ️  Admin user already exists")
+            print("Admin user already exists")
         
         # Create sample cases
         if AnimalCase.query.count() == 0:
@@ -67,7 +67,7 @@ def seed_database():
             ]
             for case in cases:
                 db.session.add(case)
-            print(f"✅ Created {len(cases)} sample cases")
+            print(f"Created {len(cases)} sample cases")
         
         # Create sample NGOs
         if NGO.query.count() == 0:
@@ -91,7 +91,7 @@ def seed_database():
             ]
             for ngo in ngos:
                 db.session.add(ngo)
-            print(f"✅ Created {len(ngos)} sample NGOs")
+            print(f"Created {len(ngos)} sample NGOs")
         
         # Create sample volunteers
         if Volunteer.query.count() == 0:
@@ -115,7 +115,7 @@ def seed_database():
             ]
             for vol in volunteers:
                 db.session.add(vol)
-            print(f"✅ Created {len(volunteers)} sample volunteers")
+            print(f"Created {len(volunteers)} sample volunteers")
         
         # Create sample donations
         if Donation.query.count() == 0:
@@ -139,7 +139,7 @@ def seed_database():
             ]
             for donation in donations:
                 db.session.add(donation)
-            print(f"✅ Created {len(donations)} sample donations")
+            print(f"Created {len(donations)} sample donations")
         
         # Create sample hospitals
         if Hospital.query.count() == 0:
@@ -163,14 +163,14 @@ def seed_database():
             ]
             for hospital in hospitals:
                 db.session.add(hospital)
-            print(f"✅ Created {len(hospitals)} sample hospitals")
+            print(f"Created {len(hospitals)} sample hospitals")
         
         db.session.commit()
-        print("\n🎉 Database seeded successfully!")
-        print("\n📋 Admin Credentials:")
+        print("\nDatabase seeded successfully!")
+        print("\nAdmin Credentials:")
         print("   Email: admin@resqtrack.com")
         print("   Password: admin123")
-        print("\n🌐 Access admin dashboard at: http://localhost:8000/admin.html")
+        print("\nAccess admin dashboard at: http://localhost:8000/admin.html")
 
 
 if __name__ == "__main__":

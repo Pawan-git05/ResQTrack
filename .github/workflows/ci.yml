@@ -24,6 +24,6 @@ jobs:
         run: flake8 backend
       - name: Test
         env:
-          DATABASE_URL: sqlite:///:memory:
+          DATABASE_URL: mysql+mysqlconnector://root:1234@localhost/resqtrack
           ALLOWED_ORIGINS: http://localhost:5500
         run: pytest -q

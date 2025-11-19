@@ -6,8 +6,8 @@ from backend.app.extensions import db
 
 @pytest.fixture()
 def app(tmp_path, monkeypatch):
-	# Use SQLite in-memory DB for speed
-	monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+	# Use MySQL connector URL (from test environment)
+	monkeypatch.setenv("DATABASE_URL", "mysql+mysqlconnector://root:1234@localhost/resqtrack")
 	monkeypatch.setenv("ALLOWED_ORIGINS", "*")
 	monkeypatch.setenv("UPLOAD_FOLDER", str(tmp_path / "uploads"))
 	app = create_app()

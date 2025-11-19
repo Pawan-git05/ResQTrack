@@ -1,16 +1,18 @@
 import os
 from datetime import timedelta
+from dotenv import load_dotenv
+
+
+# Load environment from project .env (if present)
+load_dotenv()
 
 
 class Config:
 	SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-key")
 	JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "dev-jwt-secret")
 
-	# Database: default to SQLite for local dev/tests; override via DATABASE_URL
-	SQLALCHEMY_DATABASE_URI: str = os.getenv(
-		"DATABASE_URL",
-		"sqlite:///resqtrack.db",
-	)
+	# Read database URL from environment (.env or system env). No SQLite fallback.
+	SQLALCHEMY_DATABASE_URI: str | None = os.getenv("DATABASE_URL")
 	SQLALCHEMY_TRACK_MODIFICATIONS: bool = False
 
 	# JWT
@@ -20,10 +22,12 @@ class Config:
 	CORS_SUPPORTS_CREDENTIALS: bool = True
 	# Prefer ALLOWED_ORIGINS for production; fallback to CORS_ORIGINS or '*'
 	_cors_origins_env = os.getenv(
-        "ALLOWED_ORIGINS", 
-        os.getenv("CORS_ORIGINS", "http://127.0.0.1:5500,http://localhost:5500")
-    )
-	CORS_ORIGINS: str | list[str] = _cors_origins_env.split(",") if "," in _cors_origins_env else _cors_origins_env
+		"ALLOWED_ORIGINS",
+		os.getenv("CORS_ORIGINS", "http://127.0.0.1:5500,http://localhost:5500"),
+	)
+	CORS_ORIGINS: str | list[str] = (
+		_cors_origins_env.split(",") if "," in _cors_origins_env else _cors_origins_env
+	)
 
 	# Mail
 	MAIL_SERVER: str = os.getenv("MAIL_SERVER", "smtp.gmail.com")
